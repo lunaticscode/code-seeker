@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 type ProjectOrigins = 'local' | 'remote'
 const useGetFileTree = () => {
-  const [fileTree, setFileTree] = useState<FileNode>()
+  const [fileTree, setFileTree] = useState<FileNode[]>()
   const handleExtractProjectFileTree = (_, data) => {
     setFileTree(data)
   }

@@ -1,5 +1,5 @@
 import { HashRouter, Route, Routes } from 'react-router-dom'
-import HomePage from './pages/HomePage'
+import MainPage from './pages/MainPage'
 import RootLayout from './components/layout/RootLayout'
 
 const Router = () => {
@@ -7,7 +7,7 @@ const Router = () => {
     <RootLayout>
       <HashRouter>
         <Routes>
-          <Route path={'/'} element={<HomePage />} />
+          <Route path={'/'} element={<MainPage />} />
         </Routes>
       </HashRouter>
     </RootLayout>
