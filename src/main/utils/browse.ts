@@ -1,6 +1,6 @@
 import { readdirSync, statSync } from 'fs'
 import { join } from 'path'
-import { MUST_EXCLUDE_PATHS } from '../consts/ignores'
+import { DEFUALT_MUST_EXCLUDES, MUST_EXCLUDE_PATHS } from '../consts/ignores'
 
 const getFileNode = (rootDir, fileName) => {
   const fileNode: FileNode = { name: '', type: 'file', path: '' }
@@ -22,13 +22,17 @@ const getFileNode = (rootDir, fileName) => {
   return fileNode
 }
 
-export const getFileTree = (projectDir: string): FileNode[] => {
+export const getFileTree = (
+  projectDir: string,
+  lang: ProgrammingLangs = 'javascript'
+): FileNode[] => {
   const fileNodes: FileNode[] = []
   try {
     const baseFileNames = readdirSync(projectDir)
     if (!baseFileNames.length) return []
     for (const fileName of baseFileNames) {
-      if (!MUST_EXCLUDE_PATHS.javascript?.includes(fileName)) {
+      const excludes = [...(MUST_EXCLUDE_PATHS[lang] ?? []), ...DEFUALT_MUST_EXCLUDES]
+      if (!excludes?.includes(fileName)) {
         const fileNode = getFileNode(projectDir, fileName)
         fileNodes.push(fileNode)
       }

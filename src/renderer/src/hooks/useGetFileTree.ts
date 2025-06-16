@@ -1,16 +1,16 @@
+import { ProjectOrigins } from '@renderer/types'
 import { useEffect, useState } from 'react'
 
-type ProjectOrigins = 'local' | 'remote'
 const useGetFileTree = () => {
   const [fileTree, setFileTree] = useState<FileNode[]>()
   const handleExtractProjectFileTree = (_, data) => {
     setFileTree(data)
   }
 
-  const trigger = (origin: ProjectOrigins, lang: ProgrammingLangs = 'javascript') => {
+  const trigger = (origin: ProjectOrigins, path: string, lang: ProgrammingLangs = 'javascript') => {
     console.log('trigger exec')
     if (origin === 'local') {
-      window.electron.ipcRenderer.send('request-project-dir-from-local', lang)
+      window.electron.ipcRenderer.send('extract-project-file-tree', path, lang)
     }
     if (origin === 'remote') {
       window.electron.ipcRenderer.send(

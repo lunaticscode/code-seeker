@@ -56,12 +56,12 @@ app.whenReady().then(() => {
       })
 
       const dirname = result?.[0] || ''
-      if (!dirname) return
+      event.sender.send('response-project-dir-from-local', dirname)
 
-      try {
-        const filesFromDir = getFileTree(dirname)
-        return event.sender.send('extract-project-file-tree', filesFromDir)
-      } catch (err) {}
+      // try {
+      //   const filesFromDir = getFileTree(dirname)
+      //   return event.sender.send('extract-project-file-tree', filesFromDir)
+      // } catch (err) {}
     })
   })
 
@@ -69,8 +69,17 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
 
   ipcMain.on('request-project-dir-from-remote', (_, remotePath) => {
-    console.log('asdasdas')
     console.log(remotePath)
+  })
+
+  ipcMain.on('extract-project-file-tree', (event, rootDir, lang) => {
+    try {
+      const filesFromDir = getFileTree(rootDir, lang)
+      return event.sender.send('extract-project-file-tree', filesFromDir)
+    } catch (err) {
+      console.error(err)
+      return event.sender.send('extract-project-file-tree', [])
+    }
   })
 
   createWindow()

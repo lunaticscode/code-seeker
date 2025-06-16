@@ -1,3 +1,5 @@
+export const DEFUALT_MUST_EXCLUDES = ['.git', '.github', '.codesandbox']
+
 // JavaScript & TypeScript
 const NODEJS_MUST_EXCLUDES = [
   'node_modules',
