@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { getFileTree } from './utils/browse'
+import { getFileContent, getFileTree } from './utils/browse'
 
 function createWindow(): void {
   // Create the browser window.
@@ -80,6 +80,11 @@ app.whenReady().then(() => {
       console.error(err)
       return event.sender.send('extract-project-file-tree', [])
     }
+  })
+
+  ipcMain.on('get-content-from-file-path', (event, filePath) => {
+    const fileContent = getFileContent(filePath)
+    return event.sender.send('get-content-from-file-path', fileContent)
   })
 
   createWindow()

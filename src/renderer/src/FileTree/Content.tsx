@@ -1,35 +1,47 @@
-import { FC, Fragment } from 'react'
+import { FC, Fragment, useState } from 'react'
 import { useFileTreeContext } from './Root'
-
-export interface FileTreeProps {
+import '@renderer/assets/components/filetree.css'
+export interface FileTreeContentProps {
   data: FileNode[]
+  onFileClick?: (file: FileNode) => void
 }
 
-const FileTreeContent: FC<FileTreeProps> = (props) => {
-  const { data } = props
+const FileTreeContent: FC<FileTreeContentProps> = (props) => {
+  const { data, onFileClick } = props
   const { expandedNodes, handleChangeExpandedNodes } = useFileTreeContext()
+  const [selectedFilePath, setSelectedFilePath] = useState<string>('')
   const handleClickFileNode = (fileNode: FileNode) => {
-    console.log({ fileNode })
+    if (selectedFilePath === fileNode.path) return
+    setSelectedFilePath(fileNode.path)
     if (fileNode.type === 'dir') {
-      console.log(fileNode.type)
       handleChangeExpandedNodes(fileNode)
+    } else {
+      onFileClick?.(fileNode)
     }
   }
 
   const renderNode = (fileNode: FileNode) => {
     if (fileNode.type === 'file') {
       return (
-        <div className={'filetree-item-file'} onClick={() => handleClickFileNode(fileNode)}>
+        <div
+          data-selected={selectedFilePath === fileNode.path}
+          className={'filetree-item file'}
+          onClick={() => handleClickFileNode(fileNode)}
+        >
           {fileNode.name}
         </div>
       )
     } else {
       return (
         <>
-          <div className={'filetree-item-dir'} onClick={() => handleClickFileNode(fileNode)}>
+          <div
+            data-selected={selectedFilePath === fileNode.path}
+            className={'filetree-item dir'}
+            onClick={() => handleClickFileNode(fileNode)}
+          >
             📁{fileNode.name}
           </div>
-          <div className={'filetree-item-dir-children-wrapper'} style={{ marginLeft: '10px' }}>
+          <div className={'filetree-item dir-children-wrapper'} style={{ marginLeft: '10px' }}>
             {expandedNodes.includes(fileNode.path)
               ? fileNode.children?.map((fileNode, index) => (
                   <Fragment key={`${fileNode.name}-child-${index}`}>

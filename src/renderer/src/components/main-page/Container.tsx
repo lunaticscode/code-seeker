@@ -17,10 +17,14 @@ const MainContainer = () => {
     setSelecteType(type)
     window.electron.ipcRenderer.send('request-project-dir-from-local')
   }
+
   useEffect(() => {
     window.electron.ipcRenderer.on('response-project-dir-from-local', handleSelectProjectDir)
-    return () => {}
+    return () => {
+      window.electron.ipcRenderer.removeAllListeners('response-project-dir-from-local')
+    }
   }, [])
+
   return (
     <div className={'main-container'}>
       <div className={'lang-button-group'}>

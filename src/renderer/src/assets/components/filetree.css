@@ -1,0 +1,32 @@
+.filetree-item {
+  padding: 3px 0px;
+  font-size: 16px;
+  width: 100%;
+  color: gray;
+}
+
+.filetree-item.file {
+  width: 100%;
+  cursor: pointer;
+}
+.filetree-item.file[data-selected='true'] {
+  color: white;
+  font-weight: bold;
+}
+.filetree-item.file:hover {
+  color: white;
+  background-color: rgb(20, 23, 37);
+}
+
+.filetree-item.dir {
+  width: 100%;
+  cursor: pointer;
+}
+.filetree-item.dir[data-selected='true'] {
+  color: white;
+  font-weight: bold;
+}
+.filetree-item.dir:hover {
+  color: white;
+  background-color: rgb(20, 23, 37);
+}

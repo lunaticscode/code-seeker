@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react'
 
 const useGetFileTree = () => {
   const [fileTree, setFileTree] = useState<FileNode[]>()
+  const [isLoading, setIsLoading] = useState(false)
   const handleExtractProjectFileTree = (_, data) => {
+    setIsLoading(false)
     setFileTree(data)
   }
 
@@ -19,6 +21,7 @@ const useGetFileTree = () => {
         lang
       )
     }
+    setIsLoading(true)
     return
   }
 
@@ -28,6 +31,6 @@ const useGetFileTree = () => {
       window.electron.ipcRenderer.removeAllListeners('extract-project-file-tree')
     }
   }, [])
-  return { fileTree, trigger }
+  return { fileTree, trigger, isLoading }
 }
 export default useGetFileTree

@@ -1,6 +1,7 @@
-import { readdirSync, statSync } from 'fs'
-import { join } from 'path'
+import { readdirSync, statSync, readFileSync } from 'fs'
+import { join, extname } from 'path'
 import { DEFUALT_MUST_EXCLUDES, MUST_EXCLUDE_PATHS } from '../consts/ignores'
+import { EXTENSION_TO_LANGUAGE } from '../consts/langs'
 
 const getFileNode = (rootDir, fileName) => {
   const fileNode: FileNode = { name: '', type: 'file', path: '' }
@@ -41,5 +42,18 @@ export const getFileTree = (
   } catch (err) {
     console.error(err)
     return []
+  }
+}
+
+export const getFileContent = (filePath: string) => {
+  if (!filePath) return null
+  try {
+    const code = readFileSync(filePath, { encoding: 'utf-8' })
+    const ext = extname(filePath)
+    const lang = EXTENSION_TO_LANGUAGE[ext] ?? 'plaintext'
+    return { code, ext, lang }
+  } catch (err) {
+    console.error(err)
+    return null
   }
 }
