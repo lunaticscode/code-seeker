@@ -3,6 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { getFileContent, getFileTree } from './utils/browse'
+import { getLlamaSession } from './utils/llm'
 
 function createWindow(): void {
   // Create the browser window.
@@ -18,7 +19,9 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => {
+  mainWindow.on('ready-to-show', async () => {
+    const session = await getLlamaSession()
+    console.log(session)
     mainWindow.show()
   })
 

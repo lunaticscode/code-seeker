@@ -3,7 +3,7 @@ import { join, extname } from 'path'
 import { DEFUALT_MUST_EXCLUDES, MUST_EXCLUDE_PATHS } from '../consts/ignores'
 import { EXTENSION_TO_LANGUAGE } from '../consts/langs'
 
-const getFileNode = (rootDir, fileName) => {
+const getFileNode = (rootDir: string, fileName: string) => {
   const fileNode: FileNode = { name: '', type: 'file', path: '' }
   const filePath = join(rootDir, fileName)
   const fileStat = statSync(filePath)
