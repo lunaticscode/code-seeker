@@ -1,10 +1,14 @@
 import { cwd } from 'process'
 import { join } from 'path'
 import { SYSTEM_PROMPT } from '../consts/llm'
+import { app } from 'electron'
 // import { SYSTEM_PROMPT } from '../consts/llm'
 
 const modelFilename = 'qwen2.5-coder-1.5b-instruct-q4_k_m.gguf'
-const modelPath = join(cwd(), 'src', 'model', modelFilename)
+
+const modelPath = app.isPackaged
+  ? join(process.resourcesPath, 'model', modelFilename)
+  : join(cwd(), 'resources', 'model', modelFilename)
 console.log({ modelPath })
 export const getLlamaSession = async () => {
   const { getLlama, LlamaChatSession } = await import('node-llama-cpp')

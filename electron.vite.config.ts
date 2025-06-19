@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: ['node-llama-cpp'] })],
     build: {
       rollupOptions: {
         external: ['node-llama-cpp']
@@ -12,12 +12,12 @@ export default defineConfig({
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
-    build: {
-      rollupOptions: {
-        external: ['node-llama-cpp']
-      }
-    }
+    plugins: [externalizeDepsPlugin()]
+    // build: {
+    //   rollupOptions: {
+    //     external: ['node-llama-cpp']
+    //   }
+    // }
   },
   renderer: {
     resolve: {
@@ -25,11 +25,11 @@ export default defineConfig({
         '@renderer': resolve('src/renderer/src')
       }
     },
-    build: {
-      rollupOptions: {
-        external: ['node-llama-cpp']
-      }
-    },
+    // build: {
+    //   rollupOptions: {
+    //     external: ['node-llama-cpp']
+    //   }
+    // },
     plugins: [react()]
   }
 })

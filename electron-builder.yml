@@ -11,6 +11,10 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+  - model/**
+extraResources:
+  - from: resources/model
+    to: model
 win:
   executableName: code-seeker
 nsis:
