@@ -22,14 +22,74 @@
   grid-template-columns: 1fr 1fr;
   column-gap: 5px;
 }
+
 .file-content-source {
   width: 100%;
   height: 100%;
   overflow: auto;
   border-right: 1px solid #eeeeee;
 }
+
 .file-content-review {
   width: 100%;
   height: 100%;
   overflow: auto;
+}
+
+.code-line {
+  position: relative;
+  display: block;
+  height: 20px;
+  /* width: 100%; */
+}
+
+.code-line:hover {
+  background-color: rgb(39, 39, 100);
+  cursor: pointer;
+}
+
+#code-scope-container {
+  position: absolute;
+  width: 100%;
+  top: 0px;
+}
+
+#code-scope-section {
+  position: relative;
+  z-index: 100;
+  width: 100%;
+}
+
+#code-scope-startline {
+  width: 100%;
+  height: 2px;
+  position: absolute;
+  background-color: rgb(77, 79, 231);
+}
+
+#code-scope-startline:hover {
+  height: 8px;
+  margin-top: -4px;
+  cursor: n-resize;
+}
+#code-scope-startline[data-wait='true'] {
+  height: 8px;
+  background-color: blue;
+  cursor: n-resize;
+}
+
+#code-scope-target-section {
+}
+
+#code-scope-endline {
+  width: 100%;
+  height: 2px;
+  background-color: rgb(77, 79, 231);
+  position: absolute;
+  top: 19px;
+}
+#code-scope-endline:hover {
+  height: 8px;
+  margin-top: -2px;
+  cursor: s-resize;
 }

@@ -2,13 +2,12 @@ import { cwd } from 'process'
 import { join } from 'path'
 import { SYSTEM_PROMPT } from '../consts/llm'
 import { app } from 'electron'
-// import { SYSTEM_PROMPT } from '../consts/llm'
 
 const modelFilename = 'qwen2.5-coder-1.5b-instruct-q4_k_m.gguf'
 
 const modelPath = app.isPackaged
   ? join(process.resourcesPath, 'model', modelFilename)
-  : join(cwd(), 'resources', 'model', modelFilename)
+  : join(cwd(), 'model', modelFilename)
 console.log({ modelPath })
 export const getLlamaSession = async () => {
   const { getLlama, LlamaChatSession } = await import('node-llama-cpp')
@@ -19,6 +18,5 @@ export const getLlamaSession = async () => {
     contextSequence: context.getSequence(),
     systemPrompt: SYSTEM_PROMPT
   })
-
   return session
 }

@@ -1,4 +1,5 @@
-export const DEFUALT_MUST_EXCLUDES = ['.git', '.github', '.codesandbox']
+const IMAGE_EXCLUDES = ['.png', '.jpg', 'jpeg', '.webp', '.ai']
+export const DEFUALT_MUST_EXCLUDES = [...IMAGE_EXCLUDES, '.git', '.github', '.codesandbox']
 
 // JavaScript & TypeScript
 const NODEJS_MUST_EXCLUDES = [

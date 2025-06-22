@@ -17,7 +17,8 @@
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "pnpm run build && electron-builder --dir",
     "build:win": "pnpm run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
+    "build:mac-intel": "electron-vite build && electron-builder --mac --x64",
+    "build:mac-apple": "electron-vite build && electron-builder --mac --arm64",
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {

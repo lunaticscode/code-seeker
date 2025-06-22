@@ -6,3 +6,4 @@ out
 *.log*
 src/model/**/*
 resources/model/**/*
+model

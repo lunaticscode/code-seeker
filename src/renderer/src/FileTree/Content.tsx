@@ -11,7 +11,7 @@ const FileTreeContent: FC<FileTreeContentProps> = (props) => {
   const { expandedNodes, handleChangeExpandedNodes } = useFileTreeContext()
   const [selectedFilePath, setSelectedFilePath] = useState<string>('')
   const handleClickFileNode = (fileNode: FileNode) => {
-    if (selectedFilePath === fileNode.path) return
+    if (fileNode.type === 'file' && selectedFilePath === fileNode.path) return
     setSelectedFilePath(fileNode.path)
     if (fileNode.type === 'dir') {
       handleChangeExpandedNodes(fileNode)
