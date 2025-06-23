@@ -1,10 +1,24 @@
-import { DragEvent, useEffect, useRef, useState, FC, useMemo, MouseEvent } from 'react'
+import {
+  DragEvent,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  MouseEvent,
+  forwardRef,
+  useImperativeHandle
+} from 'react'
 import { createRoot, Root } from 'react-dom/client'
 type ScopeLineDirections = 'start' | 'end'
 type ScopeDragHandler = (e: DragEvent<HTMLDivElement>, type: ScopeLineDirections) => void
 type UseCodeScopeArg = {
   onChangeLines: (type: ScopeLineDirections, lineNumber: number) => void
-  onChangeSelecting: (selecting: boolean) => void
+  onChangeSelecting: (type: ScopeLineDirections, selecting: boolean) => void
+}
+
+interface CodeScopeRefs {
+  triggerChangeLine: (type: ScopeLineDirections, lineNumber: number) => void
+  triggerClearWaitLine: () => void
 }
 
 interface CodeScopeProps {
@@ -12,101 +26,117 @@ interface CodeScopeProps {
   onChangeSelecting: UseCodeScopeArg['onChangeSelecting']
 }
 
-const CodeScope: FC<CodeScopeProps> = ({ onChangeScope, onChangeSelecting }) => {
-  const startLineRef = useRef<HTMLDivElement>(null)
-  const endLineRef = useRef<HTMLDivElement>(null)
-  const intialLineY = useRef<{ start: number; end: number }>({ start: 0, end: 0 })
-  const debounceTimer = useRef<NodeJS.Timeout>(null)
-  const debounceTimer2 = useRef<NodeJS.Timeout>(null)
-  const [startMarginTop, setStartMarginTop] = useState<number>(0)
-  const [endMarginBottom, setEndMarginBottom] = useState<number>(0)
-  const [waitLine, setWaitLine] = useState<ScopeLineDirections | null>(null)
+const CodeScope = forwardRef<CodeScopeRefs, CodeScopeProps>(
+  ({ onChangeScope, onChangeSelecting }, ref) => {
+    const startLineRef = useRef<HTMLDivElement>(null)
+    const endLineRef = useRef<HTMLDivElement>(null)
+    const intialLineY = useRef<{ start: number; end: number }>({ start: 0, end: 0 })
+    const debounceTimer = useRef<NodeJS.Timeout>(null)
+    const debounceTimer2 = useRef<NodeJS.Timeout>(null)
+    const [startMarginTop, setStartMarginTop] = useState<number>(0)
+    const [endMarginBottom, setEndMarginBottom] = useState<number>(0)
+    const [waitLine, setWaitLine] = useState<ScopeLineDirections | null>(null)
 
-  const handleDragStartOfStartLine: ScopeDragHandler = (e, type) => {}
-  const handleDragEndOfStartLine: ScopeDragHandler = (e, type) => {}
-
-  const handleDragCaptureOfStartLine: ScopeDragHandler = (e, type) => {
-    const { start, end } = intialLineY.current
-    const distance = type === 'start' ? start - e.clientY : e.clientY - end
-    if (!e.clientY || distance <= 0) return
-    const sp = 20 * Math.floor(distance / 20)
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current)
-    }
-
-    debounceTimer.current = setTimeout(() => {
+    const triggerChangeLine: CodeScopeRefs['triggerChangeLine'] = (type, lineNumber) => {
+      console.log('triggerChangeLine ::: ', type, lineNumber)
       if (type === 'start') {
-        // setStartMarginTop(sp)
-        setStartMarginTop(distance)
+        setStartMarginTop((prev) => prev + lineNumber * 20)
+      } else {
+        setEndMarginBottom((prev) => prev + lineNumber * 20)
       }
-      if (type === 'end') {
-        setEndMarginBottom(distance)
-      }
-    }, 2)
-    if (debounceTimer2.current) {
-      clearTimeout(debounceTimer2.current)
+      setWaitLine(null)
     }
-    debounceTimer2.current = setTimeout(() => {
-      if (type === 'start') {
-        setStartMarginTop(sp)
-      }
-      if (type === 'end') {
-        setEndMarginBottom(sp)
-      }
-      onChangeScope(type, sp / 20)
-    }, 100)
-  }
 
-  useEffect(() => {
-    if (startLineRef.current) {
-      const startRect = startLineRef.current.getBoundingClientRect()
-      intialLineY.current.start = startRect.y
+    const triggerClearWaitLine = () => {
+      setWaitLine(null)
     }
-    if (endLineRef.current) {
-      const endRect = endLineRef.current.getBoundingClientRect()
-      intialLineY.current.end = endRect.y
+    useImperativeHandle(ref, () => ({
+      triggerChangeLine,
+      triggerClearWaitLine
+    }))
+
+    const handleDragCaptureOfLine: ScopeDragHandler = (e, type) => {
+      const { start, end } = intialLineY.current
+      const distance = type === 'start' ? start - e.clientY : e.clientY - end
+      if (!e.clientY || distance <= 0) return
+      const sp = 20 * Math.floor(distance / 20)
+
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current)
+      }
+
+      debounceTimer.current = setTimeout(() => {
+        if (type === 'start') {
+          setStartMarginTop(distance)
+        }
+        if (type === 'end') {
+          setEndMarginBottom(distance)
+        }
+      }, 2)
+
+      if (debounceTimer2.current) {
+        clearTimeout(debounceTimer2.current)
+      }
+
+      debounceTimer2.current = setTimeout(() => {
+        if (type === 'start') {
+          setStartMarginTop(sp)
+        }
+        if (type === 'end') {
+          setEndMarginBottom(sp)
+        }
+        onChangeScope(type, sp / 20)
+        setWaitLine(null)
+      }, 100)
     }
-  }, [])
 
-  const handleClickLine = (e: MouseEvent, direction: ScopeLineDirections) => {
-    const changedSelecting = waitLine === direction ? null : direction
-    onChangeSelecting(changedSelecting ? true : false)
-    setWaitLine(changedSelecting)
-    e.stopPropagation()
-  }
-  const handleClickCodeSection = (e: MouseEvent) => {
-    console.log('handleClickCodeSection')
-    e.stopPropagation()
-  }
+    useEffect(() => {
+      if (startLineRef.current) {
+        const startRect = startLineRef.current.getBoundingClientRect()
+        intialLineY.current.start = startRect.y
+      }
+      if (endLineRef.current) {
+        const endRect = endLineRef.current.getBoundingClientRect()
+        intialLineY.current.end = endRect.y
+      }
+    }, [])
 
-  return (
-    <div onClick={handleClickCodeSection} id={'code-scope-section'}>
-      <div
-        id={'code-scope-startline'}
-        data-wait={waitLine === 'start'}
-        ref={startLineRef}
-        draggable
-        onClick={(e) => handleClickLine(e, 'start')}
-        onDragStart={(e) => handleDragStartOfStartLine(e, 'start')}
-        onDragEnd={(e) => handleDragEndOfStartLine(e, 'start')}
-        style={{ marginTop: `${-startMarginTop}px` }}
-        onDragCapture={(e) => handleDragCaptureOfStartLine(e, 'start')}
-      />
-      <div id={'code-scope-target-section'} />
-      <div
-        ref={endLineRef}
-        draggable
-        data-wait={waitLine === 'end'}
-        onClick={(e) => handleClickLine(e, 'end')}
-        onDragStart={(e) => handleDragStartOfStartLine(e, 'end')}
-        onDragEnd={(e) => handleDragEndOfStartLine(e, 'end')}
-        onDragCapture={(e) => handleDragCaptureOfStartLine(e, 'end')}
-        style={{ marginTop: `${endMarginBottom}px` }}
-        id={'code-scope-endline'}
-      />
-    </div>
-  )
-}
+    const handleClickLine = (e: MouseEvent, direction: ScopeLineDirections) => {
+      const changedSelecting = waitLine === direction ? null : direction
+      onChangeSelecting(direction, changedSelecting ? true : false)
+      setWaitLine(changedSelecting)
+      e.stopPropagation()
+    }
+    const handleClickCodeSection = (e: MouseEvent) => {
+      console.log('handleClickCodeSection')
+      e.stopPropagation()
+    }
+
+    return (
+      <div onClick={handleClickCodeSection} id={'code-scope-section'}>
+        <div
+          id={'code-scope-startline'}
+          data-wait={waitLine === 'start'}
+          ref={startLineRef}
+          draggable
+          onClick={(e) => handleClickLine(e, 'start')}
+          style={{ marginTop: `${-startMarginTop}px` }}
+          onDragCapture={(e) => handleDragCaptureOfLine(e, 'start')}
+        />
+        <div id={'code-scope-target-section'} />
+        <div
+          id={'code-scope-endline'}
+          ref={endLineRef}
+          data-wait={waitLine === 'end'}
+          draggable
+          onClick={(e) => handleClickLine(e, 'end')}
+          onDragCapture={(e) => handleDragCaptureOfLine(e, 'end')}
+          style={{ marginTop: `${endMarginBottom}px` }}
+        />
+      </div>
+    )
+  }
+)
 export default CodeScope
 
 const getScopeContainer = () => {
@@ -118,8 +148,12 @@ const getScopeContainer = () => {
 export const useCodeScope = ({ onChangeLines, onChangeSelecting }: UseCodeScopeArg) => {
   const rootRef = useRef<Root>(null)
   const initLineNumberRef = useRef<number>(0)
-  const isSelectingRef = useRef<boolean>(false)
-
+  const currentLineNumberRef = useRef<{ [direction in ScopeLineDirections]: number }>({
+    start: 0,
+    end: 0
+  })
+  const isSelectingRef = useRef<ScopeLineDirections | null>(null)
+  const codeScopeRef = useRef<CodeScopeRefs>(null)
   const cleanupRoot = () => {
     if (rootRef.current) {
       rootRef.current.unmount()
@@ -131,30 +165,55 @@ export const useCodeScope = ({ onChangeLines, onChangeSelecting }: UseCodeScopeA
   }
 
   const handleChangeScope = (type: ScopeLineDirections, changeLineCount: number) => {
-    // console.log(initLineNumberRef.current, type, changeLineCount)
     if (isSelectingRef.current) {
       return
+    }
+    currentLineNumberRef.current = {
+      ...currentLineNumberRef.current,
+      [type]: initLineNumberRef.current + (type === 'start' ? -changeLineCount : changeLineCount)
     }
     onChangeLines(
       type,
       initLineNumberRef.current + (type === 'start' ? -changeLineCount : changeLineCount)
     )
   }
-  const handleChangeSelecting = (selecting: boolean) => {
-    isSelectingRef.current = selecting
-    onChangeSelecting(selecting)
+  const handleChangeSelecting = (direction: ScopeLineDirections, selecting: boolean) => {
+    isSelectingRef.current = selecting ? direction : null
+    onChangeSelecting(direction, selecting)
   }
 
   const MemorizedCodeScope = useMemo(
-    () => <CodeScope onChangeScope={handleChangeScope} onChangeSelecting={handleChangeSelecting} />,
+    () => (
+      <CodeScope
+        ref={codeScopeRef}
+        onChangeScope={handleChangeScope}
+        onChangeSelecting={handleChangeSelecting}
+      />
+    ),
     [handleChangeScope]
   )
 
-  const renderScope = (target: HTMLElement, initLineNumber: number) => {
+  const renderScope = (target: HTMLElement, lineNumber: number) => {
     if (isSelectingRef.current) {
-      console.log(initLineNumber)
-      // 1) CodeScope ref(imperativeHandle) 이용해서 라인 이동(=> 스타일 변경)
-      // 2) handleChangeScope 실행, direction 어떻게 가져올건 지 생각
+      const selectedDirection = isSelectingRef.current
+      const { start, end } = currentLineNumberRef.current
+      if (
+        (selectedDirection === 'start' && lineNumber >= end) ||
+        (selectedDirection === 'end' && lineNumber <= start)
+      ) {
+        codeScopeRef.current?.triggerClearWaitLine()
+        return
+      }
+
+      currentLineNumberRef.current = {
+        ...currentLineNumberRef.current,
+        [selectedDirection]: lineNumber
+      }
+      isSelectingRef.current = null
+      const changedLineAmount =
+        selectedDirection === 'start' ? start - lineNumber : lineNumber - end
+      codeScopeRef.current?.triggerChangeLine(selectedDirection, changedLineAmount)
+      onChangeLines(selectedDirection, lineNumber)
       return
     }
     cleanupRoot()
@@ -162,9 +221,10 @@ export const useCodeScope = ({ onChangeLines, onChangeSelecting }: UseCodeScopeA
     target.appendChild(container)
     rootRef.current = createRoot(container)
     rootRef.current.render(MemorizedCodeScope)
-    initLineNumberRef.current = initLineNumber
-    onChangeLines('start', initLineNumber)
-    onChangeLines('end', initLineNumber)
+    initLineNumberRef.current = lineNumber
+    currentLineNumberRef.current = { start: lineNumber, end: lineNumber }
+    onChangeLines('start', lineNumber)
+    onChangeLines('end', lineNumber)
   }
 
   useEffect(() => {

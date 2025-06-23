@@ -11,7 +11,9 @@ const MainContainer = () => {
   const [selectedType, setSelecteType] = useState<ProjectOrigins>(DEFAULT_SELECTED_PROJECT_ORIGIN)
 
   const handleSelectProjectDir = (_, rootDir) => {
-    navigate('/browse', { state: { rootDir, originType: selectedType, lang: selectedLang } })
+    if (rootDir) {
+      navigate('/browse', { state: { rootDir, originType: selectedType, lang: selectedLang } })
+    }
   }
   const handleBrowse = (type: ProjectOrigins) => {
     setSelecteType(type)

@@ -1,7 +1,7 @@
 import FileTree from '@renderer/FileTree'
 import useGetFileTree from '@renderer/hooks/useGetFileTree'
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import '@renderer/assets/container/browse-page.css'
 import Markdown from 'react-markdown'
 import useFileContentWithIPC from '@renderer/hooks/useFileContentWithIPC'
@@ -10,6 +10,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus as HighlighterStyle } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useCodeScope } from './CodeScope'
 const BrowseContainer = () => {
+  const navigate = useNavigate()
   const { renderScope } = useCodeScope({ onChangeLines, onChangeSelecting })
   const [selectedLines, setSelectedLines] = useState<{ start: number; end: number }>({
     start: 0,
@@ -26,22 +27,17 @@ const BrowseContainer = () => {
     trigger(originType, rootDir, lang)
   }
 
-  function onChangeSelecting(selecting: boolean) {
+  function onChangeSelecting(direction, selecting: boolean) {
     setIsSelecting(selecting)
   }
 
   function onChangeLines(type: 'start' | 'end', lineNumber: number) {
-    console.log(type, lineNumber)
     setSelectedLines((prev) => ({ ...prev, [type]: lineNumber }))
   }
 
   const hanldeClickCodeLine = (code: string, lineNumber: number, element: HTMLElement) => {
-    // if (isSelecting) return
-    console.log('hanldeClickCodeLine')
     const lines = code.split(/\r?\n/)
     const text = lines[lineNumber - 1]
-    console.log(text, lineNumber, element)
-    // setSelectedLines({ start: lineNumber, end: lineNumber })
     renderScope(element, lineNumber)
   }
 
@@ -51,6 +47,12 @@ const BrowseContainer = () => {
     }
   }, [rootDir + lang])
 
+  useEffect(() => {
+    if (!rootDir) {
+      navigate('/')
+    }
+  }, [rootDir])
+
   const MemorizedMarkdown = useMemo(
     () => (
       <Markdown
@@ -59,6 +61,7 @@ const BrowseContainer = () => {
           code(props) {
             const { children, className, node, ref, ...rest } = props
             const match = /language-(\w+)/.exec(className || '')
+            console.log('rendering Markdown')
             return match ? (
               <SyntaxHighlighter
                 {...rest}

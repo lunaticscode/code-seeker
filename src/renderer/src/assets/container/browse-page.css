@@ -93,3 +93,8 @@
   margin-top: -2px;
   cursor: s-resize;
 }
+#code-scope-endline[data-wait='true'] {
+  height: 8px;
+  background-color: blue;
+  cursor: n-resize;
+}
