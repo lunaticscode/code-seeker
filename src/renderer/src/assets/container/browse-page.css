@@ -1,3 +1,7 @@
+:root {
+  --scope-line-height: 4px;
+  --scope-line-active-height: 10px;
+}
 .browse-container {
   width: 100%;
   display: grid;
@@ -39,12 +43,13 @@
 .code-line {
   position: relative;
   display: block;
-  height: 20px;
+  height: 24px;
+  /* z-index: 10; */
   /* width: 100%; */
 }
 
 .code-line:hover {
-  background-color: rgb(39, 39, 100);
+  background-color: rgb(103, 41, 71);
   cursor: pointer;
 }
 
@@ -62,39 +67,50 @@
 
 #code-scope-startline {
   width: 100%;
-  height: 2px;
+  top: 0px;
+  height: var(--scope-line-height);
   position: absolute;
   background-color: rgb(77, 79, 231);
+  z-index: 150;
 }
 
 #code-scope-startline:hover {
-  height: 8px;
-  margin-top: -4px;
+  height: var(--scope-line-active-height);
+  margin-top: -6px;
   cursor: n-resize;
 }
 #code-scope-startline[data-wait='true'] {
-  height: 8px;
+  height: var(--scope-line-active-height);
   background-color: blue;
+  margin-top: -6px;
   cursor: n-resize;
 }
 
 #code-scope-target-section {
+  position: absolute;
+  width: 100%;
+  background-color: #6a3eff40;
+  z-index: -1;
+}
+#code-scope-target-section:hover {
+  z-index: -1;
 }
 
 #code-scope-endline {
   width: 100%;
-  height: 2px;
+  height: var(--scope-line-height);
   background-color: rgb(77, 79, 231);
   position: absolute;
-  top: 19px;
+  top: 18px;
+  z-index: 150;
 }
 #code-scope-endline:hover {
-  height: 8px;
+  height: var(--scope-line-active-height);
   margin-top: -2px;
   cursor: s-resize;
 }
 #code-scope-endline[data-wait='true'] {
-  height: 8px;
+  height: var(--scope-line-active-height);
   background-color: blue;
   cursor: n-resize;
 }

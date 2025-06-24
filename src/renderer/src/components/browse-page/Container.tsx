@@ -12,13 +12,16 @@ import { useCodeScope } from './CodeScope'
 const BrowseContainer = () => {
   const navigate = useNavigate()
   const { renderScope } = useCodeScope({ onChangeLines, onChangeSelecting })
+
+  const [code, setCode] = useState('')
   const [selectedLines, setSelectedLines] = useState<{ start: number; end: number }>({
     start: 0,
     end: 0
   })
   const [isSelecting, setIsSelecting] = useState<boolean>(false)
+  const [isReviewing, setIsReviewing] = useState<boolean>(false)
   const { rootDir, lang, originType } = useLocation().state
-  const [markdown, setMarkdown] = useState<string>('')
+  const [reviewResult, setReviewResult] = useState<string>('')
   const { trigger, fileTree, isLoading: treeLoading } = useGetFileTree()
   const { fileContent, handleChangeSelectedFile, isLoading: fileLoading } = useFileContentWithIPC()
   const isLoading = useMemo(() => treeLoading || fileLoading, [treeLoading, fileLoading])
@@ -27,7 +30,7 @@ const BrowseContainer = () => {
     trigger(originType, rootDir, lang)
   }
 
-  function onChangeSelecting(direction, selecting: boolean) {
+  function onChangeSelecting(_direction: string, selecting: boolean) {
     setIsSelecting(selecting)
   }
 
@@ -35,9 +38,7 @@ const BrowseContainer = () => {
     setSelectedLines((prev) => ({ ...prev, [type]: lineNumber }))
   }
 
-  const hanldeClickCodeLine = (code: string, lineNumber: number, element: HTMLElement) => {
-    const lines = code.split(/\r?\n/)
-    const text = lines[lineNumber - 1]
+  const hanldeClickCodeLine = (_code: string, lineNumber: number, element: HTMLElement) => {
     renderScope(element, lineNumber)
   }
 
@@ -53,6 +54,10 @@ const BrowseContainer = () => {
     }
   }, [rootDir])
 
+  const setupCode = (str: string) => {
+    setCode(str)
+  }
+
   const MemorizedMarkdown = useMemo(
     () => (
       <Markdown
@@ -61,7 +66,7 @@ const BrowseContainer = () => {
           code(props) {
             const { children, className, node, ref, ...rest } = props
             const match = /language-(\w+)/.exec(className || '')
-            console.log('rendering Markdown')
+            setupCode(String(children).replace(/\n$/, ''))
             return match ? (
               <SyntaxHighlighter
                 {...rest}
@@ -93,8 +98,28 @@ const BrowseContainer = () => {
       />
     ),
 
-    [fileContent.code, fileContent.lang, HighlighterStyle]
+    [fileContent.code, code, fileContent.lang, HighlighterStyle]
   )
+
+  const onReceiveLlamaChunkData = (chunk: string) => {
+    setReviewResult((prev) => prev + chunk)
+  }
+
+  const handleClickReivew = () => {
+    if (!code) return
+    const selectedCode = code.split('\n').slice(selectedLines.start - 1, selectedLines.end)
+
+    setReviewResult('')
+    window.electron.ipcRenderer.removeAllListeners('llama-test')
+    window.electron.ipcRenderer.send('llama-test', selectedCode.join('\n'))
+    window.electron.ipcRenderer.on('llama-test-start', () => {
+      setIsReviewing(true)
+    })
+    window.electron.ipcRenderer.on('llama-test', (_, chunk) => onReceiveLlamaChunkData(chunk))
+    window.electron.ipcRenderer.on('llama-test-finish', () => {
+      setIsReviewing(false)
+    })
+  }
 
   return (
     <div className={'browse-container'}>
@@ -109,9 +134,10 @@ const BrowseContainer = () => {
           {MemorizedMarkdown}
         </div>
         <div className={'file-content-review'}>
-          {isSelecting ? 'true' : 'false'}
+          {isReviewing && <h3>Review exec....</h3>}
           {JSON.stringify(selectedLines)}
-          <Markdown>{markdown}</Markdown>
+          <button onClick={handleClickReivew}>review</button>
+          <Markdown>{reviewResult}</Markdown>
         </div>
       </section>
     </div>

@@ -4,7 +4,6 @@ Return your feedback using Markdown format with clear sections.
 Ensure your comments are non-redundant and avoid repeating similar points.
 Provide constructive, concise, and specific suggestions.
 Suggest improvements only where necessary, and always explain why a change is needed.
-Do not rewrite good code unnecessarily.
-Use a professional but friendly tone.`
+Do not rewrite good code unnecessarily. Please write maximum 1000 character.`
 
 export { SYSTEM_PROMPT }

@@ -4,7 +4,9 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { getFileContent, getFileTree } from './utils/browse'
 import { getLlamaSession } from './utils/llm'
+import { LlamaChatSession } from 'node-llama-cpp'
 
+let llamaSession: LlamaChatSession
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -20,8 +22,7 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', async () => {
-    const session = await getLlamaSession()
-    console.log(session)
+    llamaSession = await getLlamaSession()
     mainWindow.show()
   })
 
@@ -88,6 +89,17 @@ app.whenReady().then(() => {
   ipcMain.on('get-content-from-file-path', (event, filePath) => {
     const fileContent = getFileContent(filePath)
     return event.sender.send('get-content-from-file-path', fileContent)
+  })
+
+  ipcMain.on('llama-test', async (event, code) => {
+    console.log(llamaSession.context, code)
+    event.sender.send('llama-test-start')
+    await llamaSession.promptWithMeta(code, {
+      onTextChunk(chunk) {
+        event.sender.send('llama-test', chunk)
+      }
+    })
+    event.sender.send('llama-test-finish')
   })
 
   createWindow()

@@ -8,6 +8,7 @@ import {
   forwardRef,
   useImperativeHandle
 } from 'react'
+import { flushSync } from 'react-dom'
 import { createRoot, Root } from 'react-dom/client'
 type ScopeLineDirections = 'start' | 'end'
 type ScopeDragHandler = (e: DragEvent<HTMLDivElement>, type: ScopeLineDirections) => void
@@ -26,6 +27,7 @@ interface CodeScopeProps {
   onChangeSelecting: UseCodeScopeArg['onChangeSelecting']
 }
 
+const CODE_LINE_HEIGHT = 24
 const CodeScope = forwardRef<CodeScopeRefs, CodeScopeProps>(
   ({ onChangeScope, onChangeSelecting }, ref) => {
     const startLineRef = useRef<HTMLDivElement>(null)
@@ -33,20 +35,49 @@ const CodeScope = forwardRef<CodeScopeRefs, CodeScopeProps>(
     const intialLineY = useRef<{ start: number; end: number }>({ start: 0, end: 0 })
     const debounceTimer = useRef<NodeJS.Timeout>(null)
     const debounceTimer2 = useRef<NodeJS.Timeout>(null)
+    const [codeSectionTop, setCodeSectionTop] = useState<number>(0)
+    const [codeSectionHeight, setCodeSectionHeight] = useState<number>(0)
     const [startMarginTop, setStartMarginTop] = useState<number>(0)
     const [endMarginBottom, setEndMarginBottom] = useState<number>(0)
     const [waitLine, setWaitLine] = useState<ScopeLineDirections | null>(null)
 
-    const triggerChangeLine: CodeScopeRefs['triggerChangeLine'] = (type, lineNumber) => {
-      console.log('triggerChangeLine ::: ', type, lineNumber)
-      if (type === 'start') {
-        setStartMarginTop((prev) => prev + lineNumber * 20)
-      } else {
-        setEndMarginBottom((prev) => prev + lineNumber * 20)
-      }
-      setWaitLine(null)
+    const setupCodeSectionTop = (trigger: ScopeLineDirections) => {
+      if (!startLineRef.current || !endLineRef.current) return
+      const { top: startY, height: startHeight } = startLineRef.current.getBoundingClientRect()
+      const { top: endY, height: endHeight } = endLineRef.current.getBoundingClientRect()
+      console.log({ startY, endY, startHeight, endHeight })
+      const startLine = Math.floor(startY / CODE_LINE_HEIGHT)
+      const endLine = Math.floor(endY / CODE_LINE_HEIGHT) - 1
+      const sectionHeight = (endLine - startLine + 1) * CODE_LINE_HEIGHT
+      console.log(sectionHeight)
+      setCodeSectionHeight(sectionHeight - 8)
+      const sectionTop =
+        document.getElementById(`code-line-${startLine + 1}`)?.getBoundingClientRect().y ?? 0
+      console.log(trigger, sectionTop)
+      setCodeSectionTop(trigger === 'end' ? 2 : -sectionTop)
+
+      // for (let i = startLine + 1; i <= endLine + 1; i++) {
+      //   const lineElem = document.getElementById(`code-line-${i}`)
+      //   if (lineElem) {
+      //     lineElem.setAttribute('style', 'background-color: #6a3eff40')
+      //   }
+      // }
+      // const a = document.getElementById('code-line-15')
     }
 
+    const triggerChangeLine: CodeScopeRefs['triggerChangeLine'] = (type, lineNumber) => {
+      if (type === 'start') {
+        flushSync(() => {
+          setStartMarginTop((prev) => prev + lineNumber * CODE_LINE_HEIGHT)
+        })
+      } else {
+        flushSync(() => {
+          setEndMarginBottom((prev) => prev + lineNumber * CODE_LINE_HEIGHT)
+        })
+      }
+      setupCodeSectionTop(type)
+      setWaitLine(null)
+    }
     const triggerClearWaitLine = () => {
       setWaitLine(null)
     }
@@ -59,7 +90,7 @@ const CodeScope = forwardRef<CodeScopeRefs, CodeScopeProps>(
       const { start, end } = intialLineY.current
       const distance = type === 'start' ? start - e.clientY : e.clientY - end
       if (!e.clientY || distance <= 0) return
-      const sp = 20 * Math.floor(distance / 20)
+      const sp = CODE_LINE_HEIGHT * Math.floor(distance / CODE_LINE_HEIGHT)
 
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current)
@@ -72,6 +103,7 @@ const CodeScope = forwardRef<CodeScopeRefs, CodeScopeProps>(
         if (type === 'end') {
           setEndMarginBottom(distance)
         }
+        // setupCodeSectionTop(type)
       }, 2)
 
       if (debounceTimer2.current) {
@@ -80,12 +112,17 @@ const CodeScope = forwardRef<CodeScopeRefs, CodeScopeProps>(
 
       debounceTimer2.current = setTimeout(() => {
         if (type === 'start') {
-          setStartMarginTop(sp)
+          flushSync(() => {
+            setStartMarginTop(sp)
+          })
         }
         if (type === 'end') {
-          setEndMarginBottom(sp)
+          flushSync(() => {
+            setEndMarginBottom(sp)
+          })
         }
-        onChangeScope(type, sp / 20)
+        setupCodeSectionTop(type)
+        onChangeScope(type, sp / CODE_LINE_HEIGHT)
         setWaitLine(null)
       }, 100)
     }
@@ -113,27 +150,44 @@ const CodeScope = forwardRef<CodeScopeRefs, CodeScopeProps>(
     }
 
     return (
-      <div onClick={handleClickCodeSection} id={'code-scope-section'}>
-        <div
-          id={'code-scope-startline'}
-          data-wait={waitLine === 'start'}
-          ref={startLineRef}
-          draggable
-          onClick={(e) => handleClickLine(e, 'start')}
-          style={{ marginTop: `${-startMarginTop}px` }}
-          onDragCapture={(e) => handleDragCaptureOfLine(e, 'start')}
-        />
-        <div id={'code-scope-target-section'} />
-        <div
-          id={'code-scope-endline'}
-          ref={endLineRef}
-          data-wait={waitLine === 'end'}
-          draggable
-          onClick={(e) => handleClickLine(e, 'end')}
-          onDragCapture={(e) => handleDragCaptureOfLine(e, 'end')}
-          style={{ marginTop: `${endMarginBottom}px` }}
-        />
-      </div>
+      <>
+        <div id={'target-code-section'} style={{ position: 'absolute' }}></div>
+        <div onClick={handleClickCodeSection} id={'code-scope-section'}>
+          <div
+            id={'code-scope-startline'}
+            onMouseDown={(e) => e.stopPropagation()}
+            data-wait={waitLine === 'start'}
+            ref={startLineRef}
+            draggable
+            onClick={(e) => handleClickLine(e, 'start')}
+            style={{ top: `${-startMarginTop - 2}px` }}
+            onDragCapture={(e) => handleDragCaptureOfLine(e, 'start')}
+          />
+          <div
+            id={'code-scope-target-section'}
+            style={
+              {
+                // height: codeSectionHeight
+                // top: codeSectionTop
+              }
+            }
+          />
+          <div
+            id={'code-scope-endline'}
+            ref={endLineRef}
+            data-wait={waitLine === 'end'}
+            draggable
+            onClick={(e) => handleClickLine(e, 'end')}
+            onDragCapture={(e) => handleDragCaptureOfLine(e, 'end')}
+            style={{
+              top: `${endMarginBottom + CODE_LINE_HEIGHT - 4}px`,
+              position: 'absolute',
+              zIndex: 150
+              // marginTop: '20px'
+            }}
+          />
+        </div>
+      </>
     )
   }
 )
