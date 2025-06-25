@@ -9,6 +9,7 @@ import { getMarkdownString } from '@renderer/utils/format'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus as HighlighterStyle } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useCodeScope } from './CodeScope'
+import useReview from '@renderer/hooks/useReview'
 const BrowseContainer = () => {
   const navigate = useNavigate()
   const { renderScope } = useCodeScope({ onChangeLines, onChangeSelecting })
@@ -18,10 +19,8 @@ const BrowseContainer = () => {
     start: 0,
     end: 0
   })
-  const [isSelecting, setIsSelecting] = useState<boolean>(false)
-  const [isReviewing, setIsReviewing] = useState<boolean>(false)
+  // const [isSelecting, setIsSelecting] = useState<boolean>(false)
   const { rootDir, lang, originType } = useLocation().state
-  const [reviewResult, setReviewResult] = useState<string>('')
   const { trigger, fileTree, isLoading: treeLoading } = useGetFileTree()
   const { fileContent, handleChangeSelectedFile, isLoading: fileLoading } = useFileContentWithIPC()
   const isLoading = useMemo(() => treeLoading || fileLoading, [treeLoading, fileLoading])
@@ -31,7 +30,7 @@ const BrowseContainer = () => {
   }
 
   function onChangeSelecting(_direction: string, selecting: boolean) {
-    setIsSelecting(selecting)
+    // setIsSelecting(selecting)
   }
 
   function onChangeLines(type: 'start' | 'end', lineNumber: number) {
@@ -101,24 +100,12 @@ const BrowseContainer = () => {
     [fileContent.code, code, fileContent.lang, HighlighterStyle]
   )
 
-  const onReceiveLlamaChunkData = (chunk: string) => {
-    setReviewResult((prev) => prev + chunk)
-  }
+  const { review, result: reviewResult, status } = useReview()
 
   const handleClickReivew = () => {
     if (!code) return
     const selectedCode = code.split('\n').slice(selectedLines.start - 1, selectedLines.end)
-
-    setReviewResult('')
-    window.electron.ipcRenderer.removeAllListeners('llama-test')
-    window.electron.ipcRenderer.send('llama-test', selectedCode.join('\n'))
-    window.electron.ipcRenderer.on('llama-test-start', () => {
-      setIsReviewing(true)
-    })
-    window.electron.ipcRenderer.on('llama-test', (_, chunk) => onReceiveLlamaChunkData(chunk))
-    window.electron.ipcRenderer.on('llama-test-finish', () => {
-      setIsReviewing(false)
-    })
+    review(selectedCode.join('\n'))
   }
 
   return (
@@ -134,7 +121,7 @@ const BrowseContainer = () => {
           {MemorizedMarkdown}
         </div>
         <div className={'file-content-review'}>
-          {isReviewing && <h3>Review exec....</h3>}
+          {status ? <div>{`reviewStatus: ${status}`}</div> : ''}
           {JSON.stringify(selectedLines)}
           <button onClick={handleClickReivew}>review</button>
           <Markdown>{reviewResult}</Markdown>

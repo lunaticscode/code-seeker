@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { getFileContent, getFileTree } from './utils/browse'
 import { getLlamaSession } from './utils/llm'
 import { LlamaChatSession } from 'node-llama-cpp'
+import ipc_events from './consts/events'
 
 let llamaSession: LlamaChatSession
 function createWindow(): void {
@@ -91,15 +92,21 @@ app.whenReady().then(() => {
     return event.sender.send('get-content-from-file-path', fileContent)
   })
 
-  ipcMain.on('llama-test', async (event, code) => {
+  ipcMain.on(ipc_events['LLAMA_REVIEW_EVENT'], async (event, code) => {
+    let isStart = false
     console.log(llamaSession.context, code)
-    event.sender.send('llama-test-start')
+    event.sender.send(ipc_events['LLAMA_REVIEW_STATUS_EVENT'], 'wait')
+
     await llamaSession.promptWithMeta(code, {
       onTextChunk(chunk) {
-        event.sender.send('llama-test', chunk)
+        if (!isStart) {
+          isStart = true
+          event.sender.send(ipc_events['LLAMA_REVIEW_STATUS_EVENT'], 'progress')
+        }
+        event.sender.send(ipc_events['LLAMA_REVIEW_EVENT'], chunk)
       }
     })
-    event.sender.send('llama-test-finish')
+    event.sender.send(ipc_events['LLAMA_REVIEW_STATUS_EVENT'], 'end')
   })
 
   createWindow()

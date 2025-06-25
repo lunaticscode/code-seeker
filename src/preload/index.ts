@@ -1,9 +1,10 @@
 import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { PROGRAMMING_LANGS } from '../main/consts/langs'
+import events from '../main/consts/events'
 
 export const langs = PROGRAMMING_LANGS
-
+export const ipc_events = events
 // Custom APIs for renderer
 const api = {}
 
@@ -15,6 +16,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
     contextBridge.exposeInMainWorld('langs', langs)
+    contextBridge.exposeInMainWorld('ipc_events', ipc_events)
   } catch (error) {
     console.error(error)
   }
