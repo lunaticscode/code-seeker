@@ -1,10 +1,6 @@
 import MainContainer from '@renderer/components/main-page/Container'
 
 const HomePage = () => {
-  return (
-    <>
-      <MainContainer />
-    </>
-  )
+  return <MainContainer />
 }
 export default HomePage

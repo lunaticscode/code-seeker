@@ -1,10 +1,6 @@
 import BrowseContainer from '@renderer/components/browse-page/Container'
 
 const BrowsePage = () => {
-  return (
-    <>
-      <BrowseContainer />
-    </>
-  )
+  return <BrowseContainer />
 }
 export default BrowsePage

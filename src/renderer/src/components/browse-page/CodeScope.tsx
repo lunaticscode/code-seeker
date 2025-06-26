@@ -55,14 +55,6 @@ const CodeScope = forwardRef<CodeScopeRefs, CodeScopeProps>(
         document.getElementById(`code-line-${startLine + 1}`)?.getBoundingClientRect().y ?? 0
       console.log(trigger, sectionTop)
       setCodeSectionTop(trigger === 'end' ? 2 : -sectionTop)
-
-      // for (let i = startLine + 1; i <= endLine + 1; i++) {
-      //   const lineElem = document.getElementById(`code-line-${i}`)
-      //   if (lineElem) {
-      //     lineElem.setAttribute('style', 'background-color: #6a3eff40')
-      //   }
-      // }
-      // const a = document.getElementById('code-line-15')
     }
 
     const triggerChangeLine: CodeScopeRefs['triggerChangeLine'] = (type, lineNumber) => {
@@ -103,7 +95,6 @@ const CodeScope = forwardRef<CodeScopeRefs, CodeScopeProps>(
         if (type === 'end') {
           setEndMarginBottom(distance)
         }
-        // setupCodeSectionTop(type)
       }, 2)
 
       if (debounceTimer2.current) {

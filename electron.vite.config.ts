@@ -13,11 +13,6 @@ export default defineConfig({
   },
   preload: {
     plugins: [externalizeDepsPlugin()]
-    // build: {
-    //   rollupOptions: {
-    //     external: ['node-llama-cpp']
-    //   }
-    // }
   },
   renderer: {
     resolve: {
@@ -25,11 +20,6 @@ export default defineConfig({
         '@renderer': resolve('src/renderer/src')
       }
     },
-    // build: {
-    //   rollupOptions: {
-    //     external: ['node-llama-cpp']
-    //   }
-    // },
     plugins: [react()]
   }
 })
