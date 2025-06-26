@@ -7,7 +7,8 @@ import { getLlamaSession } from './utils/llm'
 import { LlamaChatSession } from 'node-llama-cpp'
 import ipc_events from './consts/events'
 
-let llamaSession: LlamaChatSession
+let translateChatSession: LlamaChatSession
+let reviewChatSession: LlamaChatSession
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -23,7 +24,9 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', async () => {
-    llamaSession = await getLlamaSession()
+    const { reviewModelSession, translateModelSession } = await getLlamaSession()
+    reviewChatSession = reviewModelSession
+    translateChatSession = translateModelSession
     mainWindow.show()
   })
 
@@ -94,19 +97,29 @@ app.whenReady().then(() => {
 
   ipcMain.on(ipc_events['LLAMA_REVIEW_EVENT'], async (event, code) => {
     let isStart = false
-    console.log(llamaSession.context, code)
+    console.log(reviewChatSession.context, code)
     event.sender.send(ipc_events['LLAMA_REVIEW_STATUS_EVENT'], 'wait')
 
-    await llamaSession.promptWithMeta(code, {
+    await reviewChatSession.promptWithMeta(code, {
       onTextChunk(chunk) {
         if (!isStart) {
           isStart = true
           event.sender.send(ipc_events['LLAMA_REVIEW_STATUS_EVENT'], 'progress')
         }
+
         event.sender.send(ipc_events['LLAMA_REVIEW_EVENT'], chunk)
       }
     })
     event.sender.send(ipc_events['LLAMA_REVIEW_STATUS_EVENT'], 'end')
+  })
+
+  //* Translate model testing.
+  ipcMain.on(ipc_events['LLAMA_REVIEW_TRANSLATE_EVENT'], async (event, code) => {
+    await translateChatSession.promptWithMeta(code, {
+      onTextChunk(chunk) {
+        event.sender.send(ipc_events['LLAMA_REVIEW_TRANSLATE_EVENT'], chunk)
+      }
+    })
   })
 
   createWindow()

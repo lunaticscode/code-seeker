@@ -101,11 +101,27 @@ const BrowseContainer = () => {
   )
 
   const { review, result: reviewResult, status } = useReview()
-
+  const [translatedResult, setTranslatedResult] = useState<string>('')
   const handleClickReivew = () => {
     if (!code) return
     const selectedCode = code.split('\n').slice(selectedLines.start - 1, selectedLines.end)
     review(selectedCode.join('\n'))
+  }
+
+  const handleReceiveTranslateEventChunk = (_, chunk) => {
+    console.log(chunk)
+
+    setTranslatedResult((prev) => prev + chunk)
+  }
+
+  const handleClickTranslate = () => {
+    // review(selectedCode.join('\n'))
+
+    window.electron.ipcRenderer.on(
+      ipc_events.LLAMA_REVIEW_TRANSLATE_EVENT,
+      handleReceiveTranslateEventChunk
+    )
+    window.electron.ipcRenderer.send(ipc_events.LLAMA_REVIEW_TRANSLATE_EVENT, reviewResult)
   }
 
   return (
@@ -124,7 +140,11 @@ const BrowseContainer = () => {
           {status ? <div>{`reviewStatus: ${status}`}</div> : ''}
           {JSON.stringify(selectedLines)}
           <button onClick={handleClickReivew}>review</button>
+          <button onClick={handleClickTranslate}>Translate</button>
           <Markdown>{reviewResult}</Markdown>
+        </div>
+        <div>
+          <Markdown>{translatedResult}</Markdown>
         </div>
       </section>
     </div>
